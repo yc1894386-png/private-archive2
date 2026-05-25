@@ -1,92 +1,188 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>小档案馆</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
-      margin: 0;
-      background: #f7f3ee;
-      color: #2f2a25;
-    }
-    header {
-      padding: 24px 18px 12px;
-      font-size: 28px;
-      font-weight: 700;
-    }
-    main {
-      padding: 16px;
-    }
-    .search {
-      width: 100%;
-      padding: 14px;
-      border-radius: 14px;
-      border: 1px solid #ddd0c4;
-      box-sizing: border-box;
-      font-size: 16px;
-      background: #fffaf5;
-    }
-    .folder {
-      margin-top: 14px;
-      padding: 18px;
-      border-radius: 18px;
-      background: #fffaf5;
-      border: 1px solid #e5d7ca;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-    }
-    .folder-title {
-      font-size: 18px;
-      font-weight: 700;
-    }
-    .folder-meta {
-      margin-top: 6px;
-      color: #7b6b5f;
-      font-size: 14px;
-    }
-    .bottom {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: #fffaf5;
-      border-top: 1px solid #e5d7ca;
-      display: flex;
-      justify-content: space-around;
-      padding: 10px 0 18px;
-      font-size: 14px;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>小档案馆</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;background:#f7f3ee;color:#2f2a25}
+header{padding:22px 16px 10px;font-size:28px;font-weight:800}
+main{padding:14px 14px 88px}
+input,textarea,select,button{font:inherit}
+.search,input,textarea,select{width:100%;box-sizing:border-box;border:1px solid #dfd0c2;border-radius:14px;background:#fffaf5;padding:13px;margin:8px 0}
+textarea{min-height:130px}
+.card{background:#fffaf5;border:1px solid #e5d7ca;border-radius:18px;padding:15px;margin:12px 0;box-shadow:0 4px 12px rgba(0,0,0,.04)}
+.title{font-weight:800;font-size:17px}
+.meta{color:#7b6b5f;font-size:13px;margin-top:5px;line-height:1.5}
+.note{margin-top:8px;background:#f1e7dc;border-radius:12px;padding:8px;font-size:13px}
+button{border:0;border-radius:14px;background:#6f5b4b;color:white;padding:12px 14px;margin:6px 4px 6px 0}
+.secondary{background:#c8b6a6;color:#2f2a25}
+.bottom{position:fixed;left:0;right:0;bottom:0;background:#fffaf5;border-top:1px solid #e5d7ca;display:flex;justify-content:space-around;padding:10px 0 18px}
+.bottom span{font-size:14px}
+.hidden{display:none}
+.tag{display:inline-block;background:#eaded2;border-radius:999px;padding:4px 8px;margin:3px;font-size:12px}
+.article-body{line-height:1.85;font-size:17px;white-space:pre-wrap}
+</style>
 </head>
 <body>
-  <header>小档案馆</header>
+<header>小档案馆</header>
 
-  <main>
-    <input class="search" placeholder="搜索文章、作者、tag、备注" />
+<main>
+<section id="home">
+<input class="search" id="homeSearch" placeholder="搜索标题、作者、summary、备注、正文" oninput="searchWorks(this.value)">
+<div id="folders"></div>
+<button onclick="newFolder()">+ 新建文件夹</button>
+<button onclick="showPage('import')">+ 导入文章</button>
+<h3>最近保存</h3>
+<div id="recentWorks"></div>
+</section>
 
-    <div class="folder">
-      <div class="folder-title">📁 Crowley/Aziraphale</div>
-      <div class="folder-meta">0 篇文章 · 私人合集</div>
-    </div>
+<section id="import" class="hidden">
+<h2>导入文章</h2>
+<input id="workTitle" placeholder="标题">
+<input id="workAuthor" placeholder="作者">
+<textarea id="workSummary" placeholder="Summary / 简介"></textarea>
+<textarea id="workTags" placeholder="标签，用逗号分隔，例如 CA, Good Omens, 长篇"></textarea>
+<select id="workFolder"></select>
+<textarea id="workNote" placeholder="我的备注：雷点、喜欢原因、读后感"></textarea>
+<textarea id="workContent" placeholder="把 AO3 Entire Work 复制内容粘贴到这里"></textarea>
+<button onclick="saveWork()">保存文章</button>
+<button class="secondary" onclick="showPage('home')">返回</button>
+</section>
 
-    <div class="folder">
-      <div class="folder-title">📁 未读</div>
-      <div class="folder-meta">0 篇文章</div>
-    </div>
+<section id="search" class="hidden">
+<h2>搜索</h2>
+<input class="search" placeholder="输入关键词" oninput="searchWorks(this.value,true)">
+<div id="searchResults"></div>
+</section>
 
-    <div class="folder">
-      <div class="folder-title">📁 超喜欢</div>
-      <div class="folder-meta">0 篇文章</div>
-    </div>
-  </main>
+<section id="reader" class="hidden">
+<div id="readerContent"></div>
+<button class="secondary" onclick="showPage('home')">返回首页</button>
+</section>
 
-  <nav class="bottom">
-    <span>首页</span>
-    <span>搜索</span>
-    <span>导入</span>
-    <span>标签</span>
-    <span>设置</span>
-  </nav>
+<section id="settings" class="hidden">
+<h2>设置</h2>
+<button onclick="exportData()">导出备份 JSON</button>
+<input type="file" id="importFile" onchange="importData(event)">
+<p class="meta">现在文章保存在本机浏览器里。清浏览器数据可能会丢，所以以后一定要定期导出备份。</p>
+</section>
+</main>
+
+<nav class="bottom">
+<span onclick="showPage('home')">首页</span>
+<span onclick="showPage('search')">搜索</span>
+<span onclick="showPage('import')">导入</span>
+<span onclick="showPage('settings')">设置</span>
+</nav>
+
+<script>
+let data = JSON.parse(localStorage.getItem("privateArchiveData")) || {
+  folders:[
+    {id:"f_ca",name:"Crowley/Aziraphale",note:"私人合集"},
+    {id:"f_unread",name:"未读",note:"待读文章"},
+    {id:"f_fav",name:"超喜欢",note:"反复重读"}
+  ],
+  works:[]
+};
+
+function saveData(){localStorage.setItem("privateArchiveData",JSON.stringify(data));renderAll();}
+function showPage(id){document.querySelectorAll("main section").forEach(s=>s.classList.add("hidden"));document.getElementById(id).classList.remove("hidden");renderAll();}
+
+function renderAll(){renderFolders();renderRecent();renderFolderOptions();}
+function renderFolders(){
+  const box=document.getElementById("folders");
+  box.innerHTML=data.folders.map(f=>{
+    const count=data.works.filter(w=>w.folderId===f.id&&!w.deleted).length;
+    return `<div class="card" onclick="openFolder('${f.id}')">
+      <div class="title">📁 ${f.name}</div>
+      <div class="meta">${count} 篇文章 · ${f.note||""}</div>
+    </div>`;
+  }).join("");
+}
+function renderRecent(){
+  const box=document.getElementById("recentWorks");
+  box.innerHTML=data.works.filter(w=>!w.deleted).slice().reverse().map(workCard).join("") || `<p class="meta">还没有保存文章。</p>`;
+}
+function renderFolderOptions(){
+  const s=document.getElementById("workFolder");
+  s.innerHTML=data.folders.map(f=>`<option value="${f.id}">${f.name}</option>`).join("");
+}
+function workCard(w){
+  return `<div class="card" onclick="openWork('${w.id}')">
+    <div class="title">${w.title||"未命名文章"}</div>
+    <div class="meta">作者：${w.author||"未知"}<br>${w.summary||""}</div>
+    ${w.note?`<div class="note">备注：${w.note}</div>`:""}
+    <div>${(w.tags||[]).map(t=>`<span class="tag">#${t}</span>`).join("")}</div>
+  </div>`;
+}
+function openFolder(id){
+  const f=data.folders.find(x=>x.id===id);
+  const works=data.works.filter(w=>w.folderId===id&&!w.deleted);
+  document.getElementById("readerContent").innerHTML=`<h2>📁 ${f.name}</h2><p class="meta">${f.note||""}</p>${works.map(workCard).join("")||"<p>这里还没有文章。</p>"}`;
+  showPage("reader");
+}
+function openWork(id){
+  const w=data.works.find(x=>x.id===id);
+  document.getElementById("readerContent").innerHTML=`
+    <h2>${w.title}</h2>
+    <p class="meta">作者：${w.author||"未知"}</p>
+    <p>${w.summary||""}</p>
+    ${w.note?`<div class="note">我的备注：${w.note}</div>`:""}
+    <div>${(w.tags||[]).map(t=>`<span class="tag">#${t}</span>`).join("")}</div>
+    <hr>
+    <div class="article-body">${escapeHtml(w.content||"")}</div>
+  `;
+  showPage("reader");
+}
+function newFolder(){
+  const name=prompt("文件夹名字");
+  if(!name)return;
+  const note=prompt("文件夹备注，可不填")||"";
+  data.folders.push({id:"f_"+Date.now(),name,note});
+  saveData();
+}
+function saveWork(){
+  const tags=document.getElementById("workTags").value.split(/[,，#\n]/).map(x=>x.trim()).filter(Boolean);
+  data.works.push({
+    id:"w_"+Date.now(),
+    title:workTitle.value,
+    author:workAuthor.value,
+    summary:workSummary.value,
+    tags,
+    folderId:workFolder.value,
+    note:workNote.value,
+    content:workContent.value,
+    createdAt:new Date().toISOString(),
+    deleted:false
+  });
+  document.querySelectorAll("#import input,#import textarea").forEach(x=>x.value="");
+  saveData();
+  showPage("home");
+}
+function searchWorks(q,goSearch=false){
+  const target=goSearch?document.getElementById("searchResults"):document.getElementById("recentWorks");
+  if(!q.trim()){renderRecent();return;}
+  q=q.toLowerCase();
+  const res=data.works.filter(w=>!w.deleted && JSON.stringify(w).toLowerCase().includes(q));
+  target.innerHTML=res.map(workCard).join("") || `<p class="meta">没有搜到。</p>`;
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="private-archive-backup.json";
+  a.click();
+}
+function importData(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{data=JSON.parse(reader.result);saveData();alert("导入成功");};
+  reader.readAsText(file);
+}
+function escapeHtml(str){return String(str).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));}
+renderAll();
+</script>
 </body>
 </html>
