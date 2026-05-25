@@ -45,6 +45,7 @@ button{border:0;border-radius:14px;background:#6f5b4b;color:white;padding:12px 1
 <textarea id="workTags" placeholder="标签，用逗号分隔，例如 CA, Good Omens, 长篇"></textarea>
 <select id="workFolder"></select>
 <textarea id="workNote" placeholder="我的备注：雷点、喜欢原因、读后感"></textarea>
+<button onclick="parseAO3()">一键解析 AO3</button>
 <textarea id="workContent" placeholder="把 AO3 Entire Work 复制内容粘贴到这里"></textarea>
 <button onclick="saveWork()">保存文章</button>
 <button class="secondary" onclick="showPage('home')">返回</button>
@@ -141,6 +142,51 @@ function newFolder(){
   const note=prompt("文件夹备注，可不填")||"";
   data.folders.push({id:"f_"+Date.now(),name,note});
   saveData();
+}
+  function parseAO3() {
+  const raw = document.getElementById("workContent").value;
+
+  if (!raw.trim()) {
+    alert("先粘贴 AO3 内容");
+    return;
+  }
+
+  // 标题
+  const titleMatch = raw.match(/^(.+?)\nby\s+(.+?)\n/m);
+
+  // 作者
+  const authorMatch = raw.match(/\nby\s+(.+?)\n/m);
+
+  // Summary
+  const summaryMatch = raw.match(/Summary\s+([\s\S]*?)\n(Notes|Chapter|Chapter 1|Work Text)/i);
+
+  // Tags
+  const tagMatches = raw.match(/(Archive Warning|Fandoms|Relationships|Characters|Additional Tags):([\s\S]*?)(\n[A-Z][a-z]+:|\nSummary)/g);
+
+  let tags = [];
+
+  if (tagMatches) {
+    tagMatches.forEach(t => {
+      const cleaned = t
+        .replace(/(Archive Warning|Fandoms|Relationships|Characters|Additional Tags):/g, "")
+        .replace(/\n/g, ",");
+      tags.push(...cleaned.split(",").map(x => x.trim()).filter(Boolean));
+    });
+  }
+
+  document.getElementById("workTitle").value =
+    titleMatch ? titleMatch[1].trim() : "";
+
+  document.getElementById("workAuthor").value =
+    authorMatch ? authorMatch[1].trim() : "";
+
+  document.getElementById("workSummary").value =
+    summaryMatch ? summaryMatch[1].trim() : "";
+
+  document.getElementById("workTags").value =
+    [...new Set(tags)].join(", ");
+
+  alert("AO3 信息解析完成");
 }
 function saveWork(){
   const tags=document.getElementById("workTags").value.split(/[,，#\n]/).map(x=>x.trim()).filter(Boolean);
