@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>小档案馆</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      margin: 0;
+      background: #f7f3ee;
+      color: #2f2a25;
+    }
+    header {
+      padding: 24px 18px 12px;
+      font-size: 28px;
+      font-weight: 700;
+    }
+    main {
+      padding: 16px;
+    }
+    .search {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid #ddd0c4;
+      box-sizing: border-box;
+      font-size: 16px;
+      background: #fffaf5;
+    }
+    .folder {
+      margin-top: 14px;
+      padding: 18px;
+      border-radius: 18px;
+      background: #fffaf5;
+      border: 1px solid #e5d7ca;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    }
+    .folder-title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .folder-meta {
+      margin-top: 6px;
+      color: #7b6b5f;
+      font-size: 14px;
+    }
+    .bottom {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #fffaf5;
+      border-top: 1px solid #e5d7ca;
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0 18px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <header>小档案馆</header>
+
+  <main>
+    <input class="search" placeholder="搜索文章、作者、tag、备注" />
+
+    <div class="folder">
+      <div class="folder-title">📁 Crowley/Aziraphale</div>
+      <div class="folder-meta">0 篇文章 · 私人合集</div>
+    </div>
+
+    <div class="folder">
+      <div class="folder-title">📁 未读</div>
+      <div class="folder-meta">0 篇文章</div>
+    </div>
+
+    <div class="folder">
+      <div class="folder-title">📁 超喜欢</div>
+      <div class="folder-meta">0 篇文章</div>
+    </div>
+  </main>
+
+  <nav class="bottom">
+    <span>首页</span>
+    <span>搜索</span>
+    <span>导入</span>
+    <span>标签</span>
+    <span>设置</span>
+  </nav>
+</body>
+</html>
