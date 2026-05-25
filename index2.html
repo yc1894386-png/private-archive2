@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小档案馆</title>
+
+<style>
+body{
+  margin:0;
+  background:#f6f1eb;
+  color:#2d2926;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;
+}
+
+header{
+  padding:24px 18px 10px;
+  font-size:28px;
+  font-weight:800;
+}
+
+main{
+  padding:14px 14px 90px;
+}
+
+input,textarea,select,button{
+  font:inherit;
+}
+
+input,textarea,select{
+  width:100%;
+  box-sizing:border-box;
+  margin:8px 0;
+  padding:14px;
+  border-radius:16px;
+  border:1px solid #e4d6c9;
+  background:#fffaf5;
+}
+
+textarea{
+  min-height:120px;
+}
+
+button{
+  border:0;
+  border-radius:14px;
+  padding:12px 14px;
+  background:#6f5a4c;
+  color:white;
+  margin:6px 4px 6px 0;
+}
+
+.secondary{
+  background:#d8c7b6;
+  color:#2d2926;
+}
+
+.card{
+  background:#fffaf5;
+  border:1px solid #e7d8cb;
+  border-radius:18px;
+  padding:16px;
+  margin:12px 0;
+  box-shadow:0 4px 12px rgba(0,0,0,.04);
+}
+
+.title{
+  font-size:18px;
+  font-weight:800;
+}
+
+.meta{
+  margin-top:6px;
+  color:#7a6b60;
+  font-size:14px;
+  line-height:1.6;
+}
+
+.note{
+  margin-top:10px;
+  background:#efe2d5;
+  border-radius:12px;
+  padding:10px;
+  font-size:13px;
+}
+
+.tag{
+  display:inline-block;
+  margin:4px 4px 0 0;
+  padding:5px 9px;
+  border-radius:999px;
+  background:#eadfd3;
+  font-size:12px;
+}
+
+.bottom{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  background:#fffaf5;
+  border-top:1px solid #e6d8ca;
+  display:flex;
+  justify-content:space-around;
+  padding:10px 0 18px;
+}
+
+.hidden{
+  display:none;
+}
+
+.reader{
+  white-space:pre-wrap;
+  line-height:1.9;
+  font-size:17px;
+}
+</style>
+</head>
+
+<body>
+
+<header>小档案馆</header>
+
+<main>
+
+<section id="home">
+
+<input
+id="homeSearch"
+placeholder="搜索标题、作者、tag、备注、正文"
+oninput="searchWorks(this.value)"
+>
+
+<div id="folders"></div>
+
+<button onclick="newFolder()">
++ 新建文件夹
+</button>
+
+<button onclick="showPage('importPage')">
++ 导入文章
+</button>
+
+<h3>最近保存</h3>
+
+<div id="recentWorks"></div>
+
+</section>
+
+<section id="importPage" class="hidden">
+
+<h2>导入文章</h2>
+
+<input id="workTitle" placeholder="标题">
+
+<input id="workAuthor" placeholder="作者">
+
+<textarea id="workSummary" placeholder="Summary / 简介"></textarea>
+
+<textarea id="workTags" placeholder="标签，用逗号分隔"></textarea>
+
+<select id="workFolder"></select>
+
+<textarea id="workNote" placeholder="我的备注"></textarea>
+
+<textarea
+id="workContent"
+placeholder="把 AO3 Entire Work 内容粘贴到这里"
+></textarea>
+
+<button onclick="parseAO3()">
+一键解析 AO3
+</button>
+
+<button onclick="saveWork()">
+保存文章
+</button>
+
+<button class="secondary" onclick="showPage('home')">
+返回
+</button>
+
+</section>
+
+<section id="readerPage" class="hidden">
+
+<div id="readerContent"></div>
+
+<button class="secondary" onclick="showPage('home')">
+返回首页
+</button>
+
+</section>
+
+<section id="searchPage" class="hidden">
+
+<h2>搜索</h2>
+
+<input
+placeholder="输入关键词"
+oninput="searchWorks(this.value,true)"
+>
+
+<div id="searchResults"></div>
+
+</section>
+
+<section id="settingsPage" class="hidden">
+
+<h2>设置</h2>
+
+<button onclick="exportData()">
+导出备份 JSON
+</button>
+
+<input type="file" onchange="importData(event)">
+
+<p class="meta">
+文章保存在浏览器本地，请定期备份。
+</p>
+
+</section>
+
+</main>
+
+<nav class="bottom">
+<span onclick="showPage('home')">首页</span>
+<span onclick="showPage('searchPage')">搜索</span>
+<span onclick="showPage('importPage')">导入</span>
+<span onclick="showPage('settingsPage')">设置</span>
+</nav>
+
+<script>
+
+let data = JSON.parse(localStorage.getItem("privateArchiveData")) || {
+  folders:[
+    {
+      id:"f_ca",
+      name:"Crowley/Aziraphale",
+      note:"私人合集"
+    },
+    {
+      id:"f_unread",
+      name:"未读",
+      note:"待读文章"
+    },
+    {
+      id:"f_fav",
+      name:"超喜欢",
+      note:"反复重读"
+    }
+  ],
+  works:[]
+};
+
+function saveData(){
+  localStorage.setItem(
+    "privateArchiveData",
+    JSON.stringify(data)
+  );
+
+  renderAll();
+}
+
+function showPage(id){
+
+  document
+    .querySelectorAll("main section")
+    .forEach(s=>s.classList.add("hidden"));
+
+  document
+    .getElementById(id)
+    .classList.remove("hidden");
+}
+
+function renderAll(){
+  renderFolders();
+  renderRecent();
+  renderFolderOptions();
+}
+
+function renderFolders(){
+
+  const box=document.getElementById("folders");
+
+  box.innerHTML=data.folders.map(folder=>{
+
+    const count=data.works.filter(
+      w=>w.folderId===folder.id
+    ).length;
+
+    return `
+      <div class="card" onclick="openFolder('${folder.id}')">
+
+        <div class="title">
+          📁 ${folder.name}
+        </div>
+
+        <div class="meta">
+          ${count} 篇文章 · ${folder.note}
+        </div>
+
+      </div>
+    `;
+  }).join("");
+}
+
+function renderRecent(){
+
+  const box=document.getElementById("recentWorks");
+
+  if(data.works.length===0){
+
+    box.innerHTML=`
+      <p class="meta">
+        还没有保存文章。
+      </p>
+    `;
+
+    return;
+  }
+
+  box.innerHTML=data.works
+    .slice()
+    .reverse()
+    .map(workCard)
+    .join("");
+}
+
+function renderFolderOptions(){
+
+  const select=document.getElementById("workFolder");
+
+  select.innerHTML=data.folders.map(folder=>`
+    <option value="${folder.id}">
+      ${folder.name}
+    </option>
+  `).join("");
+}
+
+function workCard(work){
+
+  return `
+    <div class="card" onclick="openWork('${work.id}')">
+
+      <div class="title">
+        ${work.title || "未命名文章"}
+      </div>
+
+      <div class="meta">
+        作者：${work.author || "未知"}
+        <br>
+        ${work.summary || ""}
+      </div>
+
+      ${
+        work.note
+        ? `
+          <div class="note">
+            ${work.note}
+          </div>
+        `
+        : ""
+      }
+
+      <div>
+        ${(work.tags || [])
+          .map(tag=>`
+            <span class="tag">
+              #${tag}
+            </span>
+          `)
+          .join("")
+        }
+      </div>
+
+    </div>
+  `;
+}
+
+function openFolder(id){
+
+  const folder=data.folders.find(
+    f=>f.id===id
+  );
+
+  const works=data.works.filter(
+    w=>w.folderId===id
+  );
+
+  document.getElementById("readerContent").innerHTML=`
+
+    <h2>
+      📁 ${folder.name}
+    </h2>
+
+    <p class="meta">
+      ${folder.note}
+    </p>
+
+    ${
+      works.length
+      ? works.map(workCard).join("")
+      : "<p>这里还没有文章。</p>"
+    }
+
+  `;
+
+  showPage("readerPage");
+}
+
+function openWork(id){
+
+  const work=data.works.find(
+    w=>w.id===id
+  );
+
+  document.getElementById("readerContent").innerHTML=`
+
+    <h2>${work.title}</h2>
+
+    <p class="meta">
+      作者：${work.author || "未知"}
+    </p>
+
+    <p>
+      ${work.summary || ""}
+    </p>
+
+    ${
+      work.note
+      ? `
+        <div class="note">
+          我的备注：${work.note}
+        </div>
+      `
+      : ""
+    }
+
+    <div>
+      ${(work.tags || [])
+        .map(tag=>`
+          <span class="tag">
+            #${tag}
+          </span>
+        `)
+        .join("")
+      }
+    </div>
+
+    <hr>
+
+    <div class="reader">
+      ${escapeHtml(work.content || "")}
+    </div>
+
+  `;
+
+  showPage("readerPage");
+}
+
+function newFolder(){
+
+  const name=prompt("文件夹名字");
+
+  if(!name) return;
+
+  const note=prompt("文件夹备注") || "";
+
+  data.folders.push({
+    id:"f_"+Date.now(),
+    name:name,
+    note:note
+  });
+
+  saveData();
+}
+
+function parseAO3(){
+
+  const raw=document
+    .getElementById("workContent")
+    .value;
+
+  if(!raw.trim()){
+    alert("先粘贴 AO3 内容");
+    return;
+  }
+
+  const lines=raw.split("\n");
+
+  const title=lines[0] || "";
+
+  let author="";
+
+  const byIndex=lines.findIndex(
+    l=>l.trim().startsWith("by ")
+  );
+
+  if(byIndex!==-1){
+    author=lines[byIndex]
+      .replace("by ","")
+      .trim();
+  }
+
+  let summary="";
+
+  const summaryIndex=lines.findIndex(
+    l=>l.trim()==="Summary"
+  );
+
+  if(summaryIndex!==-1){
+    summary=lines
+      .slice(summaryIndex+1,summaryIndex+6)
+      .join(" ")
+      .trim();
+  }
+
+  const tagKeywords=[
+    "Fandoms",
+    "Relationships",
+    "Characters",
+    "Additional Tags"
+  ];
+
+  let tags=[];
+
+  lines.forEach(line=>{
+
+    tagKeywords.forEach(key=>{
+
+      if(line.includes(key)){
+
+        const cleaned=line
+          .replace(key,"")
+          .replace(":","")
+          .trim();
+
+        tags.push(
+          ...cleaned
+            .split(",")
+            .map(t=>t.trim())
+            .filter(Boolean)
+        );
+      }
+
+    });
+
+  });
+
+  document.getElementById("workTitle").value=title;
+
+  document.getElementById("workAuthor").value=author;
+
+  document.getElementById("workSummary").value=summary;
+
+  document.getElementById("workTags").value=
+    [...new Set(tags)].join(", ");
+
+  alert("AO3 信息解析完成");
+}
+
+function saveWork(){
+
+  const tags=document
+    .getElementById("workTags")
+    .value
+    .split(/[,，#]/)
+    .map(t=>t.trim())
+    .filter(Boolean);
+
+  const work={
+
+    id:"w_"+Date.now(),
+
+    title:document.getElementById("workTitle").value,
+
+    author:document.getElementById("workAuthor").value,
+
+    summary:document.getElementById("workSummary").value,
+
+    tags:tags,
+
+    folderId:document.getElementById("workFolder").value,
+
+    note:document.getElementById("workNote").value,
+
+    content:document.getElementById("workContent").value
+
+  };
+
+  data.works.push(work);
+
+  saveData();
+
+  showPage("home");
+
+  alert("保存成功");
+}
+
+function searchWorks(query,isSearchPage=false){
+
+  const target=isSearchPage
+    ? document.getElementById("searchResults")
+    : document.getElementById("recentWorks");
+
+  if(!query.trim()){
+    renderRecent();
+    return;
+  }
+
+  query=query.toLowerCase();
+
+  const results=data.works.filter(work=>
+    JSON.stringify(work)
+      .toLowerCase()
+      .includes(query)
+  );
+
+  target.innerHTML=
+    results.length
+    ? results.map(workCard).join("")
+    : `
+      <p class="meta">
+        没有搜到。
+      </p>
+    `;
+}
+
+function exportData(){
+
+  const blob=new Blob(
+    [JSON.stringify(data,null,2)],
+    {
+      type:"application/json"
+    }
+  );
+
+  const a=document.createElement("a");
+
+  a.href=URL.createObjectURL(blob);
+
+  a.download="private-archive-backup.json";
+
+  a.click();
+}
+
+function importData(event){
+
+  const file=event.target.files[0];
+
+  if(!file) return;
+
+  const reader=new FileReader();
+
+  reader.onload=function(){
+
+    data=JSON.parse(reader.result);
+
+    saveData();
+
+    alert("导入成功");
+  };
+
+  reader.readAsText(file);
+}
+
+function escapeHtml(text){
+
+  return String(text)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;");
+}
+
+renderAll();
+
+</script>
+
+</body>
+</html>
